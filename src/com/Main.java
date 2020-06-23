@@ -1,0 +1,56 @@
+package com;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+        String domainAddress = "yandex.ru";
+        List<String> ipArray = getIpList(domainAddress);
+        System.out.printf("%-30s%-10s%n","ip address","Номер AS");
+        System.out.println("---------------------------------------------");
+        for (String str : ipArray) {
+            String address = str;
+            String ripeAnswer = Whois.getWhoisRipe(address);
+            String arinAnswer = Whois.getWhoisArin(address);
+            if (ripeAnswer == "-1") {
+                if (arinAnswer == "-1") {
+                    System.out.printf("%-30s%-10s%n",address,"");
+                }
+                else System.out.printf("%-30s%-10s%n",address,arinAnswer);
+            } else System.out.printf("%-30s%-10s%n",address,ripeAnswer);
+        }
+    }
+
+    public static List<String> getIpList(String ip_domain) {
+        BufferedReader in;
+        try {
+            Runtime runtime = Runtime.getRuntime();
+            Process process = runtime.exec("tracert " + ip_domain);
+            in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = "";
+            String regexp = "([0-9]{1,3}[\\.]){3}[0-9]{1,3}";
+            List<String> allMatches = new ArrayList<>();
+            Pattern pattern = Pattern.compile(regexp);
+            if (process == null)
+                System.out.println("could not connect");
+            while ((line = in.readLine()) != null) {
+                Matcher matcher = pattern.matcher(line);
+                if (matcher.find()) {
+                    allMatches.add(matcher.group());
+                }
+            }
+            allMatches.remove(0);
+            return allMatches;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
