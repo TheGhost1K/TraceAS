@@ -12,20 +12,22 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         String domainAddress = "yandex.ru";
-        List<String> ipArray = getIpList(domainAddress);
-        System.out.printf("%-30s%-10s%n","ip address","Номер AS");
-        System.out.println("---------------------------------------------");
-        for (String str : ipArray) {
-            String address = str;
-            String ripeAnswer = Whois.getWhoisRipe(address);
-            String arinAnswer = Whois.getWhoisArin(address);
-            if (ripeAnswer == "-1") {
-                if (arinAnswer == "-1") {
-                    System.out.printf("%-30s%-10s%n",address,"");
-                }
-                else System.out.printf("%-30s%-10s%n",address,arinAnswer);
-            } else System.out.printf("%-30s%-10s%n",address,ripeAnswer);
+        HTTPWorker http = new HTTPWorker();
+        String out;
+        StringBuilder outBuilder = new StringBuilder();
+
+        for (String string : getIpList(domainAddress))
+        {
+            String[] tempArr = http.sendGet(string).split(",");
+            if(tempArr.length == 1)
+                outBuilder.append(String.format("%-30s%n",tempArr[0]));
+            if(tempArr.length == 2)
+                outBuilder.append(String.format("%-30s%-10s%n",tempArr[0],tempArr[1].split(" ")[0]));
         }
+        out = outBuilder.toString();
+        System.out.printf("%-30s%-10s%n","ip address","Номер АС");
+        System.out.println("-----------------------------------------");
+        System.out.println(out);
     }
 
     public static List<String> getIpList(String ip_domain) {
@@ -35,7 +37,7 @@ public class Main {
             Process process = runtime.exec("tracert " + ip_domain);
             in = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line = "";
-            String regexp = "([0-9]{1,3}[\\.]){3}[0-9]{1,3}";
+            String regexp = "([0-9]{1,3}[.]){3}[0-9]{1,3}";
             List<String> allMatches = new ArrayList<>();
             Pattern pattern = Pattern.compile(regexp);
             if (process == null)
